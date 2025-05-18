@@ -12,7 +12,7 @@ ChemReservoir is an open-source framework for chemically-inspired reservoir mode
 ChemReservoir scripts are given in [the Scripts folder](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/Scripts). 
 
 ## License
-This project is licensed under the MIT License - see the () file for details
+This project is licensed under the MIT License - see [the LICENSE file](https://github.com/MehmetAzizYirik/ChemReservoir/blob/main/LICENSE) file for details.
 
 ## Authors
 
