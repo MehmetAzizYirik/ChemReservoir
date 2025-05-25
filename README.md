@@ -5,11 +5,22 @@ Copyright 2025 Mehmet Aziz Yirik
 
 ## Introduction
 
-ChemReservoir is an open-source framework for chemically-inspired reservoir modelling. The tool allows the design of reservoir models combination of stochastic simulation and regression modules. 
+ChemReservoir is an open-source framework for chemically-inspired reservoir modelling. The tool allows the design of optimal chemically-inspired reservoir models based on genetic algorithms.
+Combination of Gillespie algorithm based stochastic simulation and regression functions is performed for the evaluation of each individual in the genetic algorithm.
 
 ## Scripts
 
-ChemReservoir scripts are given in [the Scripts folder](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/Scripts). 
+ChemReservoir main scripts are given in [the scripts folder](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/scripts). An example usage of ChemReservoir is given in [the tests folder]((https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/tests/tests.py)).
+
+## Dependencies
+
+ChemReservoir utilizes the listed libraries:
+
+- [MØD](https://cheminf.imada.sdu.dk/mod/)
+- [deap](https://pypi.org/project/deap/)
+- [numpy](https://pypi.org/project/numpy/)
+- [scipy](https://pypi.org/project/scipy/)
+
 
 ## License
 This project is licensed under the MIT License - see [the LICENSE file](https://github.com/MehmetAzizYirik/ChemReservoir/blob/main/LICENSE) file for details.
