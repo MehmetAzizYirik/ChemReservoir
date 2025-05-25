@@ -48,231 +48,110 @@ class simFunc:
         self.iterationInputFlows=None
         self.numberOfMolecules=0
         self.numberOfReactions=0
-        #self.initializeSeed()
         self.reactionRateScale=int(arguments[4])
         self.reactionRatesList=arguments[5].split(',')
         self.reactionRatesDict=dict()
         self.Food1=None
-        #self.reactionRatesDict = {i: float(weight)*reactionRateScale for i, weight in enumerate(arguments[5].split(','))}
-    
-    def reload_stochsim(self):
-        if 'stoch' in sys.modules:
-            del sys.modules['stoch']
-        if 'mod.stochsim' in sys.modules:
-            del sys.modules['mod.stochsim']
-        import mod.stochsim as stoch
-        
-    #print("Module 'stochsim' has been reloaded.")
 
-    def initializeSeed(self):
-        '''
-        Initializing the seed for the random module.
-        '''
-        random.seed(self.seed)
-    
-    def printDeclaredInstanceVariables(self):
-        '''
-        Printing the declared instance variables
-        '''
-        print("seed", self.seed)
-        print("outrate", self.outRate)
-        print("firstInitialAmount", self.firstInitialAmount)
-        print("secondInitialAmount", self.secondInitialAmount)
-        print("scaling rate", self.scalingRate)
-        '''
-        if len(self.moleculeLabelsNotPlotted)!=0:
-            print("moleculeLabelsNotPlotted", self.moleculeLabelsNotPlotted)
-        '''
-
-    #Basic functions to deal with arrays
-    
-    def getRandomNumber(self):
-        '''
-        Random floating number generator
-        '''
-        randomFloat = random.uniform(0, 1)
-        return randomFloat
-
-    def getUniqueFloatingNumbers(self, start, stop, size):
-        '''
-        Generating unique list of random floatting numbers for given parameters.
-
-        @param start, int, lower limit
-        @param stop,  int, upper limit
-        @param size,  int, total number to generate
-        '''
-        uniqueSet = set()
-        while len(uniqueSet) < size:
-            x = round(random.uniform(start, stop), 2)
-            uniqueSet.add(x)
-        return list(uniqueSet)
-        
-    def getFloatingNumbers(self, start, stop, size):
-        '''
-        Generate random floating numbers for given range
-        
-        @param start int mimumum value of the range
-        @param stop int maximum value of the range
-        @param size int total number of floating numbers
-        '''
-        randomNumbers = [round(random.uniform(start, stop), 2) for _ in range(size)]
-        return randomNumbers
-        
-    def getRandomSample(self, start, stop, size, scalingRate):
-        '''
-        Generate random floating numbers for given range.
-        By using random.sample, there is no need of duplicate check.
-        
-        @param start int mimumum value of the range
-        @param stop int maximum value of the range
-        @param size int total number of floating numbers
-        '''
-        integerList = random.sample(range(start, stop), size)
-        floatList = [x/scalingRate for x in integerList]
-        return (floatList)
-        
     def initializeIRate(self):
-        '''
+        """
         Initialize the iRate for the initial molecules.
-        '''
+        """
+
         for molecule in self.initializedMolecules:
             self.iRate[molecule]:None
             
     def generateRates(self, flows, rStart=0, rEnd=0):
-        '''
+        """
         Generating the input and reactions rates randomly for the given
         parameters.
 
         @param rStart int reaction rate lower limit
         @param rEnd   int reaction rate upper limit
-        '''
+        """
         
         self.getExperimentalTimeArray()
         self.scalingRates(flows)
-    
-    #In step input I dont need exp time as it is only used for the interpolation, varying input flow.
-    #In step input I dont need exp time as it is only used for the interpolation, varying input flow.
+
     def getExperimentalTimeArray(self, experimentalTimeArray=None ):
-        '''
+        """
         Defining the experimental time array. If it is not given by user, the
         time range it defined by default based on total run time.
         
         @param  experimentalTime    float or int array  user defined experimental time array
-        '''
+        """
+
         self.experimentalTimes= experimentalTimeArray if experimentalTimeArray else range(self.totalRunTime)
         
-    # In step input there is no need of scaling rate, used for varying input flow of formaldyhde not even sne.
     def scalingRates(self, flows):
-        '''
+        """
         Scaling the input flow rates.
-        '''
+        """
         scaledFlows=np.empty_like(flows)
         scaledFlows=flows*self.scalingRate
         self.iRateSeries=scaledFlows
-        
-    def divideInputFlowIntoChuncks(self, numberOfChunks=14):
-        '''
-        Dividing the input flow into chunks to define the step input flow.
-        Here for every chunck the mean of the input flow for that chunk
-        is set as the constant input flow
-        
-        @param numberOfChunks   int     number of chunks of the input flow, set to 14 as default.
-        '''
-        flow=self.iRateSeries
-        chunkSize=len(flow)//numberOfChunks
-        remainder=len(flow)%numberOfChunks
-        inputFlow2d=flow[:-remainder].reshape((numberOfChunks, chunkSize))
-        chunkMeans=np.mean(inputFlow2d, axis=1)
-        tiledMeans = np.tile(chunkMeans, chunkSize)
-        return np.concatenate((tiledMeans, flow[-remainder:]))
-    
-    def constantValues(self, num_partitions=5):
-        total_length = len(self.iRateSeries)
-        chunk_length = total_length // num_partitions
-        constant_values = random.sample(range(750, 3000), num_partitions)
-        remaining_length = total_length % num_partitions
-        result_array = np.zeros(total_length)
 
-        for i, value in enumerate(constant_values):
-            start_index = i * chunk_length + min(i, remaining_length)
-            end_index = (i + 1) * chunk_length + min(i + 1, remaining_length)
-            result_array[start_index:end_index] = value
-
-        return result_array
-        
-    def binaryInputFlow(self, traceIteration):
-        constant_values = np.zeros(traceIteration)
-        initialValue=5
-        for i in range(traceIteration):
-            if i%2==0: #first index is 0
-                constant_values[i]=initialValue
-                initialValue*=2
-        
-        self.iterationInputFlows=constant_values
-
-    def interpolationSingle(self, time, iRateSingle):
-        '''
+    def interpolationSingle(self, time, iRateSeries):
+        """
         Performing the interpolation for the trace time to detect the irate/ input flow.
         
         @param time     float   current trace time
-        '''
-        return np.interp(time, self.experimentalTimes, iRateSingle)
+        @param iRateSeries     list   input inflow rate values.
+        """
+        return np.interp(time, self.experimentalTimes, iRateSeries)
     
     def interpolation(self, time):
-        '''
+        """
         Performing the interpolation for the trace time to detect the irate/ input flow.
         
         @param time     float   current trace time
-        '''
+
+        Returns:
+            float: interpolated value for the inflow.
+        """
         value=self.interpolationSingle(time, self.iRateSeries)
         return value
         
     def iRateCallback(self, v):
-        '''
+        """
         Function for the stochastic simulation.
 
         @param v dg.vertex a vertex in the DG
-        '''
+        """
         if v.graph in self.iRate:
-            return (self.iRate[v.graph], True) #False
+            return (self.iRate[v.graph], True)
         else:
             return (0, True)
-    
-    def defaultORate(self, v):
-        '''
-        Define the output rate based on the current vertex in the traces.
-        
-        @param v dg.vertex a vertex in the DG
-        '''
-        
-        if self.outFlowMolecule!=None and v.graph==self.outFlowMolecule:
-            return (self.outRate, False)
-        else:
-            return (0, False)
 
     def oRate(self, v):
-        return self.outRate, True  # False
+        """
+        Simulation subfunction for the outflow amount.
+
+        @param v dg.vertex a vertex in the DG
+
+        Returns:
+            tuple: (outflow, caching boolean)
+        """
+        return self.outRate, True
 
     def reactionRates(self, e):
-        '''
+        """
         Defining the reaction rates individually.
 
         @param e dg.edge an edge in the DG
-        '''
-        '''
-        rule=None
-        for r in e.rules:
-            rule=r
-            break
-        totalRules=len(self.inputRules)
-        '''
+
+        Returns:
+            tuple: (reaction rate value, caching boolean)
+        """
         rule = next(iter(e.rules))
-        #totalRules=len(self.inputRules)
-        #print("rule id is more", rule.id, totalRules) if rule.id>totalRules else None
-        #return (self.reactionRatesDict[reaction.id%totalRules], False)
-        return (self.reactionRatesDict[rule], True) #True set it to no need to call again and again
+        return (self.reactionRatesDict[rule], True)
 
     def onIterationBegin(self, time, i):
+        """
+        Simulation sub function for inflow values of each iteration.
+
+        @param time     float   current trace time
+        """
         if not self.inputFlowTimes:
             value = self.interpolation(time)
         elif (time - self.inputFlowTimes[-1]) >= 1:
@@ -285,12 +164,12 @@ class simFunc:
         self.iRate[self.Food1] = value
 
     def simulation(self, inputRules, inputGraphs, initialStates, traceIteration=0, traceTime=0):
-        '''
+        """
         Stochastic simulation function from MOD.
 
         @param traceIteration   int                     the number of iterations for trace
         @param traceTime        int                     the duration time for each iteration in trace
-        '''
+        """
         strat = rightPredicate[lambda d: all(g.vLabelCount("C") <= 6 for g in d.right)](
             (
                 inputRules
@@ -319,72 +198,47 @@ class simFunc:
         p = mod.DGPrinter()
         p.withGraphImages = False
         p.pushEdgeColour(lambda e: "blue" if e in edgeUsed else "")
-        #p.pushEdgeLabel(lambda e: "k={}".format(round(self.reactionRates(e)[0],3)))
         del simulationResult
         dg.print(p)
         return traces
 
-    def getTracesIteration(self, iteration, time):
-        '''
-        Calling the EventTraces for the stochastic simulation.
-
-        @param iteration    int     the number of iterations
-        @param time         int     the duration time for each iteration
-        '''
-        for i in range(iteration):
-            start=timer()
-            self.iRate[self.firstMolecule]=self.iterationInputFlows[i]
-            if self.iterationInputFlows[i]==0:
-                self.iRate[self.secondMolecule]=0
-                self.iRate[self.thirdMolecule]=0
-            else:
-                self.iRate[self.secondMolecule]=5
-                self.iRate[self.thirdMolecule]=5 #this is the irate definition but not in initializeIrate
-            trace = self.simulationResult.simulate(time=time)
-            end=timer()
-        self.traces = trace
-        trace.print()
-
     @staticmethod
     def getTraces(totalRunTime, simulationResult):
-        '''
+        """
         Calling the EventTraces for the stochastic simulation.
 
         @param time     int     the duration time for the whole simulation
-        '''
+        """
 
         time = totalRunTime
         trace = simulationResult.simulate(time=time)
-        #trace.print()
         return trace
 
     def printDG(self, traces):
-        '''
+        """
         Printing the derivation graph by highlighting the used chemical
         reactions.
-        '''
+        """
         dg = mod.DG
         edgeUsed = set()
         for t in traces:
             if isinstance(t.action, mod.CausalityEdgeAction):
                 edgeUsed.add(t.action.edge)
         dg = next(iter(edgeUsed)).dg
-        #self.numberOfMolecules=dg.numVertices
-        #self.numberOfReactions=dg.numEdges
         p = mod.DGPrinter()
         p.withGraphImages = False
         p.pushEdgeColour(lambda e: "blue" if e in edgeUsed else "")
         p.pushEdgeLabel(lambda e: "k={}".format(self.reactionRates(e)[0]))
-        #del self.simulationResult
         dg.print(p)
         '''
         for a in dg.graphDatabase:
             a.print()
         '''
+
     def printDGWithCounts(self):
-        '''
+        """
         Printing the derivation graph by highlighting the input flow and out flow.
-        '''
+        """
         cIn = {}
         cOut = {}
         cEdge = {}
@@ -421,10 +275,11 @@ class simFunc:
         dg.print(p)
     
     def printDGWithAll(self):
-        '''
+        """
         Printing the derivation graph by highlighting the input flow, out flow,
         and the occurrences of the reactions.
-        '''
+        """
+
         del self.simulationResult
         cIn = {}
         cOut = {}
@@ -470,9 +325,9 @@ class simFunc:
         dg.print(p)
 
     def getReactionFrequencies(self):
-        '''
+        """
         Get the reaction frequencies for the traces
-        '''
+        """
         reaction = {}
         tuple = None
         hyperEdge=None
@@ -483,16 +338,16 @@ class simFunc:
             if isinstance(t.action, CausalityEdgeAction):
                 hyperEdge=t.action.edge
                 for rule in hyperEdge.rules:
-                    tuple = (rule.name, t.time) # kept as int value to get the plots for time ranges
+                    tuple = (rule.name, t.time)
                     if tuple not in reaction:
                         reaction[tuple] = 0
                     reaction[tuple] += 1
         return reaction
         
     def getReactionFrequenciesDictionary(self):
-        '''
+        """
         Get the reaction frequencies for the traces as dictionary format.
-        '''
+        """
         timeWindows = self.generateTimeWindows()
         timeWindowsDict = {window: {} for window in timeWindows}
         hyperEdge=None
@@ -511,11 +366,11 @@ class simFunc:
         return timeWindowsDict
         
     def getUniqueRuleIDs(self, timeWindowsDict):
-        '''
+        """
         Retriving the unique reaction rule ids information
         from the time windows dictionary of reactions.
         Time windows mean the epsilon define time ranges over the traces time
-        '''
+        """
         unique = set()
         for window in timeWindowsDict:
             for key in timeWindowsDict[window].keys():
@@ -523,20 +378,20 @@ class simFunc:
         return sorted(unique)
     
     def retrieveRuleFrequency(self, ruleNames, timeWindows, timeWindowsDict):
-        '''
+        """
         First calculating the average time for the time ranges, then
         for each reaction, assigning the reaction frequency information for that average time.
         
         @param ruleNames        str[]       unique list of rule names
         @param timeWindows      dict{(,)}   time windows defined based on epsilon value
         @param timeWindowsDict  dict{}      reaction frequencies stored as a dictionary
-        '''
+        """
         rule = None
         timeArray=[]
         index=0
         for window in timeWindows:
             timeArray.append(self.getAverageTime(window))
-        data = np.zeros((len(timeArray), len(ruleNames)+1)) #that plus one is the column for time series.
+        data = np.zeros((len(timeArray), len(ruleNames)+1))
         data[:,0]=timeArray
         for window in timeWindows:
             for i in range(len(ruleNames)):
@@ -547,10 +402,10 @@ class simFunc:
         return data
     
     def reactionFrequenciesData(self):
-        '''
+        """
         Getting the reaction frequencies data both the frequencies
         and rule names as labels for plotting.
-        '''
+        """
         timeWindowsDict=self.getReactionFrequenciesDictionary()
         timeWindows=list(timeWindowsDict.keys())
         ruleNames = self.getUniqueRuleIDs(timeWindowsDict)
@@ -558,14 +413,14 @@ class simFunc:
         return (reactionData, ruleNames)
 
     def getTimeWindowsConcentrations(self, originalTimeArray, averageTimesArray, timeWindows, originalConcentrations):
-        '''
+        """
         Get the concentrations for the time windows for each molecule.
         
         @param originalTimeArray int[] traces time array
         @param averageTimesArray int[] the average time for each epsilon time window
         @param timeWindows dict{(,)} time windows defined with the epsilon value
         @param originalConcentrations int[][] original concentrations over each traces
-        '''
+        """
         
         timeWindowsConcentrations = np.zeros((len(averageTimesArray), originalConcentrations.shape[1]+1))
         timeWindowsConcentrations[:,0]=averageTimesArray
@@ -579,25 +434,25 @@ class simFunc:
             counting molecule counts in the time windows.
             '''
             index = np.where(timeWindowsConcentrations[:, 0] == averageTimeForWindow)
-            timeWindowsOccurences[averageTimeForWindow]+=1 #how many entries are within that window.
+            timeWindowsOccurences[averageTimeForWindow]+=1
             for j in range(numberOfConcentrations):
                 timeWindowsConcentrations[index, (j+1)]+=originalConcentrations[i, j]
             '''
             As we run through each time entry in the original simulation time array, we count the
             occurrences within the time windows and for each time summing the molecule counts.
             '''
-        timeWindowsConcentrations=self.getNormalizedTimeWindowsConcentrations(averageTimesArray, timeWindowsConcentrations, timeWindowsOccurences) #this is just dividing each molecule's count by the number of entries in the time window. So the average basically.
+        timeWindowsConcentrations=self.getNormalizedTimeWindowsConcentrations(averageTimesArray, timeWindowsConcentrations, timeWindowsOccurences)
         return timeWindowsConcentrations
         
     def getNormalizedTimeWindowsConcentrations(self, averageTimesArray, timeWindowsConcentrations, timeWindowsOccurences):
-        '''
+        """
         Getting the occurrences of each time windows as the dictionary, then getting the average concentration
         for each time window for unbiased results.
         
         @param averageTimesArray int[] the average time for each epsilon time window
         @param timeWindowsConcentrations int[][] concentration sum for each time window
         @param timeWindowsOccurences dict{} the occurrences of the traces in each time window
-        '''
+        """
         rows=timeWindowsConcentrations.shape[0]
         columns=timeWindowsConcentrations.shape[1]
         count=0
@@ -608,12 +463,12 @@ class simFunc:
         return timeWindowsConcentrations
 
     def plotTraces(self, epsilon=0.5):
-        '''
+        """
         Plotting the traces with the epsilon time windows as its x-axis
         with the reaction frequencies for each time window.
         
         @param epsilon floating default epsilon is given but user can assign a new value.
-        '''
+        """
         data=self.concentrations
         originalTimeArray = data[:, 0]
         originalConcentrations = data[:, 1:]
@@ -626,13 +481,13 @@ class simFunc:
         self.askForSubplot(timeWindowsConcentrations, reactionFrequencyData)
         
     def askForSubplot(self, concentrationData, reactionData, userInput=None):
-        '''
+        """
         Asking users for time range of the sub plot and plotting as many times as user requests new subplots.
         
         @param concentrationData int[][] molecular concentrations
         @param reactionData int[][] reactions data
         @param userInput str y or n as the user answer
-        '''
+        """
         
         if userInput is None:
             self.plot2Data(concentrationData, reactionData)
@@ -675,7 +530,7 @@ class simFunc:
         if timeRange:
             minTime, maxTime = timeRange
             
-        numberOfColors=max(concentrationData.shape[1],len(reactionLabels)) #get the max of number of molecules and number of reactions
+        numberOfColors=max(concentrationData.shape[1],len(reactionLabels))
         self.colors = sns.color_palette(cc.glasbey, n_colors=numberOfColors)
         for i in range(1, concentrationData.shape[1]):
             self.askedForSpecificMoleculesPlot(concentrationData, i, self.moleculeLabels)
@@ -717,20 +572,19 @@ class simFunc:
         return searchedWindow
     
     def initializeMoleculeLabels(self):
-        '''
+        """
         Initializing the initial molecule labels before traces by reading the input graphs
-        '''
+        """
         index=1
         for graph in self.inputGraphs:
-            #self.initialMoleculeLabels.append(graph.name)
             self.initialMoleculeLabels.append(str(index))
             index+=1
 
     def updateMoleculeLabels(self, moleculeLabels):
-        '''
+        """
         In case if some molecules are not occured in the traces, adding the missed molecule labels.
         The initial order of molecules and the order coming from traces are not the same.
-        '''
+        """
         if len(self.initialMoleculeLabels)==len(moleculeLabels):
             return moleculeLabels
         else:
@@ -746,12 +600,12 @@ class simFunc:
             return moleculeLabels
             
     def defineTheHeaders(self, array, numberOfMolecules):
-        '''
+        """
         Defining the headers on the top of traces' concentration matrix
         
         @param array int[][] concentrations
         @param numberOfMolecules int total number of molecules in traces
-        '''
+        """
         headers = {"Trace time" : array[:,0]}
         for i in range(1, numberOfMolecules):
             header=self.moleculeLabels[i-1]
@@ -759,38 +613,39 @@ class simFunc:
         return headers
     
     def storeAsCSV(self, array):
-        '''
+        """
         Storing the concentrations matrix as a csv file called result.csv
         
         @param array int[][] concentrations
-        '''
+        """
         numberOfMolecules = len(array[0])
         headers = self.defineTheHeaders(array, numberOfMolecules)
         data = pd.DataFrame(headers)
         data.to_csv("result.csv", index=False)
     
     def defineThreshold(self, data):
-        '''
+        """
         For the detection of global peaks and minimas, defining the threshold.
         
         @param  data    int[][]     concentration data
-        '''
+        """
         standardDeviation = np.std(data)
         threshold = standardDeviation
         return threshold
         
     def getGlobalPeaks(self, data):
-        '''
+        """
         Detection of global peaks in the concentration data.
-        
+
         @param  data    int[][]     concentration data
-        '''
+        """
+
         prominenceThreshold= self.defineThreshold(data)
         peaks, _ = find_peaks(data, prominence=prominenceThreshold)
         return len(peaks) > 0
     
     def getGlobalMinimas(self, data):
-        '''
+        """
         Detection of global minimas in the concentration data,
         and returning boolean, checking there is more than 1 minima
         or not.
@@ -798,27 +653,28 @@ class simFunc:
         or more, then the system is not oscilating.
         
         @param  data    int[][]     concentration data
-        '''
+        """
+
         prominenceThreshold = self.defineThreshold(data)
         minima, _ = find_peaks([-x for x in data], prominence=prominenceThreshold)
         minimaValues = [data[i] for i in minima]
         return sum(1 for element in minimaValues if element < 10) > 1
         
-    def retrieveConcentrationInfoOverTime(self, traces, iMolecules, totalTime): #iMolecules
-        '''
+    def retrieveConcentrationInfoOverTime(self, traces, iMolecules, totalTime):
+        """
         Retrieving the concentration information for every molecule
         in the traces over the time
 
         @iMolecules     int     total number of initial molecules in the system.
-        '''
+        """
+
         initialState = traces.initialState
         vertices = initialState.net.dg.vertices
         numVertices = initialState.net.dg.numVertices
         initialCounts= [0.0] * iMolecules
         for i in vertices:
             initialCounts[int(i.graph.name)]=initialState[i]
-        #traceMoleculeLabels = [i.graph.name for i in vertices] #self.moleculeLabels
-        #self.moleculeLabels = self.updateMoleculeLabels(traceMoleculeLabels)
+
         numberOfStates = len(traces)  # Total number of states to track over time
         concentrations = np.zeros((numberOfStates, iMolecules + 1), dtype=np.float32)
         vertices = []
@@ -833,15 +689,7 @@ class simFunc:
             for i in vertices: initialCounts[int(i.graph.name)]=initialState[i]
             concentrations[index, 0] = float(trace.time)  # Store the time in the first column
             molecule_concentrations = initialCounts
-            #molecule_concentrations = [initialState[i] for i in vertices]
             if len(molecule_concentrations) < iMolecules:
                 molecule_concentrations.extend([0] * (iMolecules - len(molecule_concentrations)))
             concentrations[index, 1:] = molecule_concentrations  # Store the molecule concentrations in the rest
-        '''
-        print("adam"*10)
-        for row in concentrations:
-            print(row)
-            #print(self.reactionRatesList)
-        print("adam" * 10)
-        '''
         return concentrations
