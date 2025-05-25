@@ -3,7 +3,7 @@
 import logging
 import os
 
-def setup_logger(task_name, log_dir="iterativeResults"):
+def setup_logger(task_name, log_dir="results"):
     os.makedirs(log_dir, exist_ok=True)
 
     logger = logging.getLogger(task_name)
