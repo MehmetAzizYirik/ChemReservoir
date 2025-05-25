@@ -2,8 +2,8 @@ import numpy as np
 from deap import base, creator, tools, algorithms
 import random, time
 from scipy.stats import sem, t
-from runLongMemoryTask import longMemoryTask
-from runShortMemoryTask import shortMemoryTask
+from scripts.runLongMemoryTask import longMemoryTask
+from scripts.runShortMemoryTask import shortMemoryTask
 
 if not hasattr(creator, "FitnessMin"):
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))

@@ -122,7 +122,7 @@ def regressionMemoryTask(train_split, sample_values, interpConcentrations):
     return error
 
 
-class modRegression:
+class chemReg:
         
         def __init__(self):
             """

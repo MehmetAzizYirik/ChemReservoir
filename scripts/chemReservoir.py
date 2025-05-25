@@ -2,7 +2,7 @@ import mod
 from mod import *
 from deap import base, creator, tools, algorithms
 import random, time
-from networkParameterOptimization import geneticAlgo
+from scripts.networkParameterOptimization import geneticAlgo
 
 def generateRingWithFixedDistancedChords(nodes, chordLength, chordStep):
     """
@@ -109,7 +109,7 @@ def buildNetwork(nodes, length, step):
 
 
 class chemReservoir:
-    def __init__(self, inputSeed, inputLogger, memoryTask=None, tau=None, runTime=None, repetition=None):
+    def __init__(self, inputSeed, inputLogger, memoryTask=None, tau=None, runTime=None, repetition=None, networkOptMaxTime=None):
         """
         Setting instance variables of the genetic algorithm for topology selection optimization.
 
@@ -125,6 +125,7 @@ class chemReservoir:
         self.memoryTaskValues=(memoryTask, tau)
         self.runTime=runTime
         self.repetition=repetition
+        self.networkOptimizationMaxTime = networkOptMaxTime
         random.seed(inputSeed) #seed for random library for reproducibility.
         self.INT_BOUNDS=None
         '''
@@ -146,7 +147,7 @@ class chemReservoir:
         self.toolbox.register("select", tools.selTournament, tournsize=3)
         self.toolbox.register("evaluate", self.objective)
 
-    def callGeneticAlgorithm(self, dg, nodes, numEdges, moleculeAmount, memoryTask, runTime, repetition, tau=0):
+    def callGeneticAlgorithm(self, dg, nodes, numEdges, moleculeAmount, memoryTask, runTime=None, repetition=None, networkOptTime=None, tau=0):
         """
         Calling the genetic algorithm for the optimal topology selection.
 
@@ -159,6 +160,7 @@ class chemReservoir:
             memoryTask (string): choosing the memory tasks for regression step.
             runTime (int): simulation run time
             repetition (int): repetition value in input signal for the input hold time.
+            networkOptTime (int): max run time for network optimization process.
             tau (int): past input time, tau, should be defined if long memory task is chosen.
 
         Returns:
@@ -166,7 +168,8 @@ class chemReservoir:
         """
         genetic = geneticAlgo(dg, self.seed, nodes + 1, numEdges, self.logger,
                               moleculeAmount, memoryTask, tau=tau, runTime=runTime, repetition=repetition) #+1 due to the food molecule, indexed 0.
-        error = genetic.main()
+
+        error = genetic.main(max_time=networkOptTime)
         return error
 
     def objective(self, params):
@@ -182,7 +185,7 @@ class chemReservoir:
         self.logger.info(f"topology parameters objective: {params}")
         nodes, moleculeInflow, distance, step = params
         network = buildNetwork(nodes, distance, step)
-        score = self.callGeneticAlgorithm(network, nodes, len(network[1]), moleculeInflow, self.memoryTaskValues[0], tau=self.memoryTaskValues[1], runTime=self.runTime, repetition=self.repetition)
+        score = self.callGeneticAlgorithm(network, nodes, len(network[1]), moleculeInflow, self.memoryTaskValues[0], runTime=self.runTime, repetition=self.repetition, networkOptTime=self.networkOptimizationMaxTime, tau=self.memoryTaskValues[1])
         return score,  # , due to the deap library.
 
     def initialize_individual(self):
@@ -241,7 +244,7 @@ class chemReservoir:
         individual = self.mutation(individual, indpb)
         return individual,
 
-    def main(self, population_size=4, elite_size=2, max_generations=10, max_time=10000):
+    def run(self, population_size=4, elite_size=2, max_generations=10, max_time=10000):
         """
         Main function for the genetic algorithm of the topology selection process.
 

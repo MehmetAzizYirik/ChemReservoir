@@ -1,8 +1,8 @@
 import mod
 from mod import *
 import numpy as np
-from chemSimulation import simFunc
-from chemRegression import modRegression
+from scripts.chemSimulation import simFunc
+from scripts.chemRegression import chemReg
 from scipy.stats import truncnorm
 
 class shortMemoryTask:
@@ -57,7 +57,7 @@ class shortMemoryTask:
         input_graphs, input_rules = self.DG[0], self.DG[1]
         sim = simFunc(self.arguments)
         sim.Food1=self.Food1
-        modReg = modRegression()
+        cReg =  chemReg()
         sim.inputGraphs, sim.inputRules = input_graphs, input_rules
         sim.reactionRatesDict = {input_rules[i]: float(rate)*sim.reactionRateScale for i, rate in enumerate(sim.reactionRatesList)}
         sim.numberOfMolecules = len(input_graphs)
@@ -72,10 +72,10 @@ class shortMemoryTask:
         sim.generateRates(inflow, rStart=10, rEnd=100)
         traces=sim.simulation(input_rules, input_graphs, initialStates)
         matrix = np.array(sim.moleculeFlow)
-        modReg.scalingRate = sim.scalingRate
-        modReg.moleculeFlow = matrix
-        modReg.inputFlowTimes = sim.inputFlowTimes
-        modReg.numberOfMolecules = sim.numberOfMolecules
+        cReg.scalingRate = sim.scalingRate
+        cReg.moleculeFlow = matrix
+        cReg.inputFlowTimes = sim.inputFlowTimes
+        cReg.numberOfMolecules = sim.numberOfMolecules
         stochData = sim.retrieveConcentrationInfoOverTime(traces, sim.numberOfMolecules, sim.totalRunTime)
-        error = modReg.runShortMemoryTask(stochData)
+        error = cReg.runShortMemoryTask(stochData)
         return error
