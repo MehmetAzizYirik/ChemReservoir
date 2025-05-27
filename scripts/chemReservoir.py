@@ -128,22 +128,11 @@ class chemReservoir:
         self.networkOptimizationMaxTime = networkOptMaxTime
         random.seed(inputSeed) #seed for random library for reproducibility.
         self.INT_BOUNDS=None
-        '''
-        The boundaries for genetic algorithm.
-        '''
-        '''
-        self.INT_BOUNDS = {
-            'nodeValues': (50, 300),
-            'moleculeInflow': (50, 200),
-            'chordDistance': (5, 25),
-            'chordStep': (5, 25)
-        }
-        '''
         self.toolbox = base.Toolbox()
-        self.toolbox.register("individual", tools.initIterate, creator.Individual, self.initialize_individual)
+        self.toolbox.register("individual", tools.initIterate, creator.Individual, self.initializeIndividuals)
         self.toolbox.register("population", tools.initRepeat, list, self.toolbox.individual)
         self.toolbox.register("mate", tools.cxTwoPoint)
-        self.toolbox.register("mutate", self.custom_mutate, indpb=0.5)
+        self.toolbox.register("mutate", self.customMutate, indpb=0.5)
         self.toolbox.register("select", tools.selTournament, tournsize=3)
         self.toolbox.register("evaluate", self.objective)
 
@@ -169,7 +158,7 @@ class chemReservoir:
         genetic = geneticAlgo(dg, self.seed, nodes + 1, numEdges, self.logger,
                               moleculeAmount, memoryTask, tau=tau, runTime=runTime, repetition=repetition) #+1 due to the food molecule, indexed 0.
 
-        error = genetic.main(max_time=networkOptTime)
+        error = genetic.main(maxTime=networkOptTime)
         return error
 
     def objective(self, params):
@@ -188,21 +177,21 @@ class chemReservoir:
         score = self.callGeneticAlgorithm(network, nodes, len(network[1]), moleculeInflow, self.memoryTaskValues[0], runTime=self.runTime, repetition=self.repetition, networkOptTime=self.networkOptimizationMaxTime, tau=self.memoryTaskValues[1])
         return score,  # , due to the deap library.
 
-    def initialize_individual(self):
+    def initializeIndividuals(self):
         """
         Initializing the random initial individuals for genetic algorithm.
 
         Returns:
             list: List of random initial individuals.
         """
-        random_values = []
+        initials = []
         for i, (key, (low, high)) in enumerate(self.INT_BOUNDS.items()):
             step = 10 if i < 2 else 2
             value = random.randrange(low, high + 1, step)
-            value = min(random_values[0] // 2, value) if i > 1 else value
-            random_values.append(value)
-        self.logger.info(f"initial values in topology- genetic algo: {random_values}")
-        return random_values
+            value = min(initials[0] // 2, value) if i > 1 else value
+            initials.append(value)
+        self.logger.info(f"initial values in topology- genetic algo: {initials}")
+        return initials
 
     def mutation(self, individual, indpb):
         """
@@ -223,14 +212,14 @@ class chemReservoir:
                     step = 2 if i > 1 else 10
                     key = list(self.INT_BOUNDS.keys())[i]
                     low, high = self.INT_BOUNDS[key]
-                    randomChoice = random.choice([-step, step])
-                    fixedValue = max(low, min(high, individual[i] + randomChoice))
-                    individual[i] = fixedValue if i < 2 else min(individual[0] // 2, fixedValue)
+                    selectMove = random.choice([-step, step])
+                    chosenValue = max(low, min(high, individual[i] + selectMove))
+                    individual[i] = chosenValue if i < 2 else min(individual[0] // 2, chosenValue)
             if individual != original:
                 break
         return individual
 
-    def custom_mutate(self, individual, indpb=0.5):
+    def customMutate(self, individual, indpb=0.5):
         """
         Mutation function for topology selection, genetic algorithm.
 
@@ -244,38 +233,38 @@ class chemReservoir:
         individual = self.mutation(individual, indpb)
         return individual,
 
-    def run(self, population_size=4, elite_size=2, max_generations=10, max_time=10000):
+    def run(self, populationSize=4, eliteSize=2, maxGenerations=10, maxTime=10000):
         """
         Main function for the genetic algorithm of the topology selection process.
 
         Args:
-            population_size (int): total number of individual for each generation
-            elite_size (int): number of the best individuals to be stored for the next iteration
-            max_generations(int): maximum number of iterations in genetic algorithm
-            max_time(int): maximum run time for the genetic algorithm as termination criteria.
+            populationSize (int): total number of individual for each generation
+            eliteSize (int): number of the best individuals to be stored for the next iteration
+            maxGenerations(int): maximum number of iterations in genetic algorithm
+            maxTime(int): maximum run time for the genetic algorithm as termination criteria.
 
         Returns:
             tuple: The best individual and the lowest root mean square errors from the genetic algorithm.
         """
-        populations = self.toolbox.population(n=population_size)
-        start_time = time.time()
+        populations = self.toolbox.population(n=populationSize)
+        startTime = time.time()
         currentMinValue = None
-        for gen in range(max_generations):
-            elapsed_time = time.time() - start_time
-            if elapsed_time >= max_time:
+        for gen in range(maxGenerations):
+            elapsedTime = time.time() - startTime
+            if elapsedTime >= maxTime:
                 self.logger.info("Topology-Elapsed time reached, stopping.")
                 break
-            elites = tools.selBest(populations, elite_size)
+            elites = tools.selBest(populations, eliteSize)
             populations = algorithms.eaSimple(populations, self.toolbox, cxpb=1.0, mutpb=0.5, ngen=1, verbose=False)[0]
             populations.extend(elites)
-            populations = tools.selBest(populations, len(populations) - elite_size)
+            populations = tools.selBest(populations, len(populations) - eliteSize)
             fits = [ind.fitness.values[0] for ind in populations]
             self.logger.info(
                 f"Topology Generation {gen}: Min {min(fits)}, Max {max(fits)}, Avg {sum(fits) / len(fits)}")
             currentMinValue = min(fits)
             self.logger.info(f"Topology currentMinValue: {currentMinValue}")
-            local_individual = tools.selBest(populations, 1)[0]
-            self.logger.info(f"Topology local best parameters: {local_individual}")
-        best_individual = tools.selBest(populations, 1)[0]
-        self.logger.info(f"Topology Best parameters: {best_individual}")
-        return best_individual, currentMinValue
+            localIndividual = tools.selBest(populations, 1)[0]
+            self.logger.info(f"Topology local best parameters: {localIndividual}")
+        bestIndividual = tools.selBest(populations, 1)[0]
+        self.logger.info(f"Topology Best parameters: {bestIndividual}")
+        return bestIndividual, currentMinValue

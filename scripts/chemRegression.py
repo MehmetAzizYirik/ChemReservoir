@@ -37,10 +37,10 @@ def filtering(interpConcentrations):
         np.array: the filtering interpolated stochastic simulation data.
     """
     filteringThreshold = int(interpConcentrations.shape[0] * 0.5)
-    less_than_one = interpConcentrations < 1
-    count_less_than_one = np.sum(less_than_one, axis=0)
-    valid_columns = count_less_than_one < filteringThreshold
-    newArray = interpConcentrations[:, valid_columns]
+    lessThanOne = interpConcentrations < 1
+    count = np.sum(lessThanOne, axis=0)
+    filteredColumns = count < filteringThreshold
+    newArray = interpConcentrations[:, filteredColumns]
     return newArray
 
 
@@ -78,35 +78,35 @@ def getLongMemoryTargetData(interpolatedFlow, tau=10):
     return target
 
 
-def getErrorValues(y_train, y_train_pred, y_test, y_test_pred):
+def getErrorValues(yTrain, yTrainPred, yTest, yTestPred):
     """
     Calculating normalized root mean square error (NRMSE) value for training and test data.
 
     Args:
-        y_train (np.array): original training target
-        y_train_pred (np.array): predicted training target
-        y_test (np.array): original test target
-        y_test_pred (np.array): predicted test target
+        yTrain (np.array): original training target
+        yTrainPred (np.array): predicted training target
+        yTest (np.array): original test target
+        yTestPred (np.array): predicted test target
     Returns:
         float: NRMSE
     """
 
-    rmseTrain = np.sqrt(mean_squared_error(y_train, y_train_pred))
-    diffTrain=(y_train.max() - y_train.min())
+    rmseTrain = np.sqrt(mean_squared_error(yTrain, yTrainPred))
+    diffTrain=(yTrain.max() - yTrain.min())
     nrmseTrain = rmseTrain / diffTrain if diffTrain!=0 else rmseTrain
-    rmseTest = np.sqrt(mean_squared_error(y_test, y_test_pred))
-    diffTest=(y_test.max() - y_test.min())
+    rmseTest = np.sqrt(mean_squared_error(yTest, yTestPred))
+    diffTest=(yTest.max() - yTest.min())
     nrmseTest = rmseTest / diffTest if diffTest!=0 else rmseTest
     return nrmseTest
 
 
-def regressionMemoryTask(train_split, sample_values, interpConcentrations):
+def regressionMemoryTask(trainSplit, sampleValues, interpConcentrations):
     """
     Regression function for memory tasks, short or long term memory.
 
     Args:
-        train_split (float): splitting the target data into train and test, default 0.70.
-        sample_values (np.array): target data.
+        trainSplit (float): splitting the target data into train and test, default 0.70.
+        sampleValues (np.array): target data.
         interpConcentrations (np.array): the interpolated molecule count from the stochastic simulation.
 
     Returns:
@@ -114,11 +114,11 @@ def regressionMemoryTask(train_split, sample_values, interpConcentrations):
     """
 
     regression = RidgeCV()
-    train_size = int(len(interpConcentrations) * train_split)
-    regression.fit(interpConcentrations[0:train_size], sample_values[0:train_size])
-    y_train_pred=regression.predict(interpConcentrations[0:train_size])
-    y_test_pred=regression.predict(interpConcentrations[train_size:])
-    error= getErrorValues(sample_values[0:train_size], y_train_pred, sample_values[train_size:], y_test_pred[:len(sample_values[train_size:])])
+    trainSize = int(len(interpConcentrations) * trainSplit)
+    regression.fit(interpConcentrations[0:trainSize], sampleValues[0:trainSize])
+    yTrainPred=regression.predict(interpConcentrations[0:trainSize])
+    yTestPred=regression.predict(interpConcentrations[trainSize:])
+    error= getErrorValues(sampleValues[0:trainSize], yTrainPred, sampleValues[trainSize:], yTestPred[:len(sampleValues[trainSize:])])
     return error
 
 
@@ -132,21 +132,19 @@ class chemReg:
             self.numberOfMolecules=None
             self.modStochSim = None
             self.interpConcentrations=None
-            self.train_split = None
-            self.split_idx = None
-            self.train_idx = None
-            self.test_idx  = None
+            self.trainSplit = None
+            self.splitIndices = None
+            self.trainIndices = None
+            self.testIndices  = None
             self.interpConcentrationsLength=None
             self.concentrationsLength = None
-            self.scaled_data=None
+            self.scaledData=None
             self.input=None
             self.sineInput=None
             self.sineInputTime=None
             self.interpolatedFlow=None
             self.firstMoleculeFlow=None
             self.inputFlowTimes=None
-            self.U_lorenz=None
-            self.X_lorenz=None
         
         def initializeArrays(self, stochData):
             """
@@ -154,7 +152,7 @@ class chemReg:
             """
 
             self.stochDataLength= len(stochData)
-            self.numberOfMolecules-=1
+            self.numberOfMolecules-=1 #due to additional food molecule
 
         def interpolationWithExperimentalTimeSeries(self, stochasticTimeArray, concentrations):
             """
@@ -209,9 +207,9 @@ class chemReg:
             Setting the test and train index values for the input array before
             the regression step.
             """
-            self.split_idx = math.floor(self.concentrationsLength* self.train_split)
-            self.train_idx = [*range(0, self.split_idx)]
-            self.test_idx  = [*range(self.split_idx, self.concentrationsLength)]
+            self.splitIndices = math.floor(self.concentrationsLength* self.trainSplit)
+            self.trainIndices = [*range(0, self.splitIndices)]
+            self.testIndices  = [*range(self.splitIndices, self.concentrationsLength)]
             
         def getInterpolatedFlow(self, stochasticTimeArray):
             """
@@ -247,7 +245,7 @@ class chemReg:
                 float: NRMSE.
             """
             targetData= getShortMemoryTargetData(self.interpolatedFlow)
-            error= regressionMemoryTask(self.train_split, targetData, interpConcentrations)
+            error= regressionMemoryTask(self.trainSplit, targetData, interpConcentrations)
             return error
 
         def regressionLongMemoryTargetData(self, interpConcentrations, tauValue=10):
@@ -262,7 +260,7 @@ class chemReg:
             """
             delay = int((3 / 2) * tauValue)
             targetData= getLongMemoryTargetData(self.interpolatedFlow, tau=tauValue)
-            error= regressionMemoryTask(self.train_split, targetData, interpConcentrations[delay:])
+            error= regressionMemoryTask(self.trainSplit, targetData, interpConcentrations[delay:])
             return error
 
         def runShortMemoryTask(self, stochData, trainSplit=0.7):
@@ -275,13 +273,10 @@ class chemReg:
             Returns:
                 float: NRMSE.
             """
-            self.train_split = trainSplit
+            self.trainSplit = trainSplit
             self.initializeArrays(stochData)
             stochasticTimeArray, concentrations = storeStochSimData(self.stochDataLength, self.numberOfMolecules, stochData)
             interpConcentrations = self.interpolationWithExperimentalTimeSeries(stochasticTimeArray, concentrations)
-            zero_columns = np.all(interpConcentrations == 0, axis=0)
-            num_zero_columns = np.sum(zero_columns)
-            if num_zero_columns != 0: print(f"Number of all-zero columns: {interpConcentrations.shape}, {num_zero_columns}")
             floatError = self.regressionShortMemoryTargetData(interpConcentrations)
             return floatError
             
@@ -295,12 +290,9 @@ class chemReg:
             Returns:
                 float: NRMSE.
             """
-            self.train_split=trainSplit
+            self.trainSplit=trainSplit
             self.initializeArrays(stochData)
             stochasticTimeArray, concentrations= storeStochSimData(self.stochDataLength, self.numberOfMolecules, stochData)
             interpConcentrations=self.interpolationWithExperimentalTimeSeries(stochasticTimeArray, concentrations)
-            zero_columns = np.all(interpConcentrations == 0, axis=0)
-            num_zero_columns = np.sum(zero_columns)
-            if num_zero_columns !=0 : print(f"Number of all-zero columns: {interpConcentrations.shape}, {num_zero_columns}")
             floatError=self.regressionLongMemoryTargetData(interpConcentrations, tauValue=tau)
             return floatError
