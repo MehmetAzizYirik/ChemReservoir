@@ -10,7 +10,7 @@ Combination of Gillespie algorithm based stochastic simulation and regression fu
 
 ## Scripts
 
-ChemReservoir main scripts are given in [the scripts folder](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/scripts). An example usage of ChemReservoir is given in [tests.py](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/scripts/tests.py).
+The main ChemReservoir framework [script](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/scripts/chemReservoir.py) and all other related scripts are located in [the scripts folder](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/scripts). An example usage of ChemReservoir is given in [tests.py](https://github.com/MehmetAzizYirik/ChemReservoir/tree/main/scripts/tests.py).
 
 ## Dependencies
 
