@@ -229,24 +229,24 @@ class geneticAlgo:
         for gen in range(maxGenerations):
             elapsedTime = time.time() - startTime
             if elapsedTime >= maxTime:
-                self.logger.info("Elapsed time reached, stopping.")
+                self.logger.info("Network Optimization - Elapsed time reached, stopping.")
                 break
             elites = tools.selBest(population, eliteSize)
             population = algorithms.eaSimple(population, self.toolbox, cxpb=1.0, mutpb=0.5, ngen=1, verbose=False)[0]
             population.extend(elites)
             population = tools.selBest(population, len(population) - eliteSize)
             fits = [ind.fitness.values[0] for ind in population]
-            self.logger.info(f"Generation {gen}: Min {min(fits)}, Max {max(fits)}, Avg {sum(fits) / len(fits)}")
+            self.logger.info(f"Network Optimization - Generation {gen}: Min {min(fits)}, Max {max(fits)}, Avg {sum(fits) / len(fits)}")
             currentMinValue=min(fits)
             if gen==0:
                 prevMinValue=currentMinValue
             else:
-                self.logger.info(f"currentMinValue: {currentMinValue}")
+                self.logger.info(f"Network Optimization - currentMinValue: {currentMinValue}")
             prevMinValue=currentMinValue
         bestIndividual = tools.selBest(population, 1)[0]
         weights = bestIndividual[5:]
         reactionRates = [float(round(float(weight / 100), 3)) for weight in weights]
         bestIndividual[5:]=reactionRates
-        self.logger.info(f"Best parameters: {bestIndividual}")
+        self.logger.info(f"Network Optimization - Best parameters: {bestIndividual}")
         return currentMinValue
     
