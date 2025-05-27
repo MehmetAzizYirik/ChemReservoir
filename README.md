@@ -6,7 +6,8 @@ Copyright 2025 Mehmet Aziz Yirik
 ## Introduction
 
 ChemReservoir is an open-source framework for chemically-inspired reservoir modelling. The tool allows the design of optimal chemically-inspired reservoir models based on genetic algorithms.
-Combination of Gillespie algorithm based stochastic simulation and regression functions is performed for the evaluation of each individual in the genetic algorithm.
+The combination of Gillespie algorithm based stochastic simulation and regression functions is performed for the evaluation of each individual in the genetic algorithm. The reservoir networks
+are generated as cycle-based topologies with chords, local connections to evaluate the impact of the local neighborhood in information processing. 
 
 ## Scripts
 
