@@ -171,7 +171,6 @@ class chemReservoir:
         Returns:
             float: the lowest normalized root mean square error from topology selection.
         """
-        self.logger.info(f"topology parameters objective: {params}")
         nodes, moleculeInflow, distance, step = params
         network = buildNetwork(nodes, distance, step)
         score = self.callGeneticAlgorithm(network, nodes, len(network[1]), moleculeInflow, self.memoryTaskValues[0], runTime=self.runTime, repetition=self.repetition, networkOptTime=self.networkOptimizationMaxTime, tau=self.memoryTaskValues[1])
@@ -190,7 +189,7 @@ class chemReservoir:
             value = random.randrange(low, high + 1, step)
             value = min(initials[0] // 2, value) if i > 1 else value
             initials.append(value)
-        self.logger.info(f"initial values in topology- genetic algo: {initials}")
+        self.logger.info(f"Topology Optimization - Initial individuals: {initials}")
         return initials
 
     def mutation(self, individual, indpb):
@@ -252,7 +251,7 @@ class chemReservoir:
         for gen in range(maxGenerations):
             elapsedTime = time.time() - startTime
             if elapsedTime >= maxTime:
-                self.logger.info("Topology-Elapsed time reached, stopping.")
+                self.logger.info("Topology Optimization - Elapsed time reached, stopping.")
                 break
             elites = tools.selBest(populations, eliteSize)
             populations = algorithms.eaSimple(populations, self.toolbox, cxpb=1.0, mutpb=0.5, ngen=1, verbose=False)[0]
@@ -260,11 +259,11 @@ class chemReservoir:
             populations = tools.selBest(populations, len(populations) - eliteSize)
             fits = [ind.fitness.values[0] for ind in populations]
             self.logger.info(
-                f"Topology Generation {gen}: Min {min(fits)}, Max {max(fits)}, Avg {sum(fits) / len(fits)}")
+                f"Topology Optimization - Generation {gen}: Min {min(fits)}, Max {max(fits)}, Avg {sum(fits) / len(fits)}")
             currentMinValue = min(fits)
-            self.logger.info(f"Topology currentMinValue: {currentMinValue}")
+            self.logger.info(f"Topology Optimization - currentMinValue: {currentMinValue}")
             localIndividual = tools.selBest(populations, 1)[0]
-            self.logger.info(f"Topology local best parameters: {localIndividual}")
+            self.logger.info(f"Topology Optimization - local best parameters: {localIndividual}")
         bestIndividual = tools.selBest(populations, 1)[0]
-        self.logger.info(f"Topology Best parameters: {bestIndividual}")
+        self.logger.info(f"Topology Optimization - Best parameters: {bestIndividual}")
         return bestIndividual, currentMinValue
