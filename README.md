@@ -20,10 +20,10 @@ The scripts folder consists of out and summary folders, required to be initializ
 
 ChemReservoir utilizes the listed libraries:
 
-- [MØD](https://cheminf.imada.sdu.dk/mod/) 
-- [deap](https://pypi.org/project/deap/)
-- [numpy](https://pypi.org/project/numpy/)
-- [scipy](https://pypi.org/project/scipy/)
+- [MØD](https://cheminf.imada.sdu.dk/mod/) (V 0.15.1.17)
+- [deap](https://pypi.org/project/deap/) (V 1.4.1)
+- [numpy](https://pypi.org/project/numpy/) (V 1.26.4)
+- [scipy](https://pypi.org/project/scipy/) (V 1.13.0)
 
 
 ## License
